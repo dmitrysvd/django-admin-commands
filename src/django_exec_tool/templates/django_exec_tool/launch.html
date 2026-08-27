@@ -1,0 +1,36 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<h1>{{ spec.label }}</h1>
+{% if spec.description %}<p class="help">{{ spec.description }}</p>{% endif %}
+
+<ul class="help">
+  <li>{% trans "Таймаут" %}: {{ spec.timeout|default:_("по умолчанию") }} {% trans "секунд" %}</li>
+  <li>{% trans "Прерываемая" %}: {{ spec.interruptible|yesno:_("да,нет") }}</li>
+  <li>{% trans "Идемпотентная" %}: {{ spec.idempotent|yesno:_("да,нет") }}</li>
+</ul>
+
+{% if not spec.interruptible %}
+<p class="errornote">
+  {% trans "Команда не объявлена прерываемой: остановка может оставить работу сделанной наполовину." %}
+</p>
+{% endif %}
+
+<form method="post">{% csrf_token %}
+  {{ form.non_field_errors }}
+  <fieldset class="module aligned">
+    {% for field in form %}
+      <div class="form-row{% if field.errors %} errors{% endif %}">
+        {{ field.errors }}
+        {{ field.label_tag }} {{ field }}
+        {% if field.help_text %}<div class="help">{{ field.help_text }}</div>{% endif %}
+      </div>
+    {% endfor %}
+  </fieldset>
+  <div class="submit-row">
+    <input type="submit" value="{% trans 'Запустить' %}" class="default">
+    <a href="{% url 'admin:exec_tool_command_list' %}" class="button cancel-link">{% trans "Cancel" %}</a>
+  </div>
+</form>
+{% endblock %}

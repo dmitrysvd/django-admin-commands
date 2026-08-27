@@ -1,0 +1,48 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<h1>{% trans "Команды из белого списка" %}</h1>
+<p class="help">
+  {% trans "Список живёт в коде: команда добавляется через ревью кода, а не с этой страницы." %}
+</p>
+
+<table id="result_list">
+  <thead>
+    <tr>
+      <th>{% trans "Команда" %}</th>
+      <th>{% trans "Таймаут" %}</th>
+      <th>{% trans "Свойства" %}</th>
+      <th>{% trans "Активных" %}</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for item in commands %}
+    <tr class="{% cycle 'row1' 'row2' %}">
+      <td>
+        <strong>{{ item.spec.label }}</strong>
+        <div class="help">{{ item.spec.description|default:item.spec.name }}</div>
+      </td>
+      <td>{{ item.spec.timeout|default:"—" }}</td>
+      <td>
+        {% if not item.enabled %}<span style="color:#c0392b">{% trans "выключена" %}</span><br>{% endif %}
+        {% if item.spec.interruptible %}<span title="{% trans 'Прерывать безопасно' %}">⏹ {% trans "прерываемая" %}</span><br>{% endif %}
+        {% if item.spec.idempotent %}<span title="{% trans 'Повторный запуск безопасен' %}">↻ {% trans "идемпотентная" %}</span><br>{% endif %}
+        {% if item.spec.confirm %}<span style="color:#d35400">⚠ {% trans "нужно подтверждение" %}</span>{% endif %}
+      </td>
+      <td>{{ item.active }}</td>
+      <td>
+        {% if item.allowed and item.enabled %}
+          <a class="button" href="{{ item.url }}">{% trans "Запустить" %}</a>
+        {% else %}
+          <span class="help">{% trans "недоступна" %}</span>
+        {% endif %}
+      </td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="5">{% trans "Пока не зарегистрировано ни одной команды." %}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

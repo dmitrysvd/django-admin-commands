@@ -1,0 +1,65 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block content %}
+<h1>{{ run.command }}</h1>
+
+<div class="module">
+  <table>
+    <tr><th>{% trans "Статус" %}</th><td id="run-status">{{ run.get_status_display }}</td></tr>
+    <tr><th>{% trans "Командная строка" %}</th><td><code>{{ run.command_line }}</code></td></tr>
+    <tr><th>{% trans "Кто запустил" %}</th><td>{{ run.requested_by_repr|default:"—" }}</td></tr>
+    <tr><th>{% trans "Причина" %}</th><td>{{ run.reason|default:"—" }}</td></tr>
+    <tr><th>{% trans "Создан" %}</th><td>{{ run.created_at }}</td></tr>
+    <tr><th>{% trans "Начат" %}</th><td>{{ run.started_at|default:"—" }}</td></tr>
+    <tr><th>{% trans "Завершён" %}</th><td>{{ run.finished_at|default:"—" }}</td></tr>
+    <tr><th>{% trans "Heartbeat" %}</th><td>{{ run.heartbeat_at|default:"—" }}</td></tr>
+    <tr><th>{% trans "Хост / PID" %}</th><td>{{ run.hostname|default:"—" }} / {{ run.pid|default:"—" }}</td></tr>
+    <tr><th>{% trans "Код возврата" %}</th><td id="run-exit">{{ run.exit_code|default_if_none:"—" }}</td></tr>
+    <tr><th>{% trans "Таймаут" %}</th><td>{{ run.timeout }} {% trans "с" %}</td></tr>
+    {% if run.stop_requested_at %}
+    <tr><th>{% trans "Остановка запрошена" %}</th>
+        <td>{{ run.stop_requested_at }} ({{ run.get_stop_mode_display }}) — {{ run.stop_requested_by|default:"—" }}</td></tr>
+    {% endif %}
+    {% if run.error %}<tr><th>{% trans "Ошибка супервизора" %}</th><td><pre>{{ run.error }}</pre></td></tr>{% endif %}
+    {% if run.log_path %}<tr><th>{% trans "Архив лога" %}</th><td><code>{{ run.log_path }}</code></td></tr>{% endif %}
+  </table>
+</div>
+
+{% if arguments %}
+<div class="module">
+  <h2>{% trans "Аргументы" %}</h2>
+  <table>
+    {% for name, value in arguments %}<tr><th>{{ name }}</th><td><code>{{ value }}</code></td></tr>{% endfor %}
+  </table>
+</div>
+{% endif %}
+
+{% if can_stop %}
+<div class="module">
+  <h2>{% trans "Остановка" %}</h2>
+  <form method="post" action="{{ stop_url }}">{% csrf_token %}
+    <div class="submit-row" style="text-align:left">
+      <button type="submit" name="mode" value="soft" class="button">{% trans "Мягкая остановка (SIGTERM)" %}</button>
+      <button type="submit" name="mode" value="hard" class="button" style="background:#c0392b">
+        {% trans "Жёсткая остановка (SIGKILL)" %}
+      </button>
+    </div>
+    <p class="help">
+      {% trans "Мягкая остановка через паузу переходит в SIGKILL. Ни та, ни другая не безопасны, если команда не рассчитана на прерывание." %}
+    </p>
+  </form>
+</div>
+{% endif %}
+
+<div class="module">
+  <h2>{% trans "Вывод" %}</h2>
+  <pre id="run-output" class="exec-tool-output"></pre>
+</div>
+
+<script id="exec-tool-config" type="application/json">
+  {"outputUrl": "{{ output_url }}", "active": {{ run.is_active|yesno:"true,false" }}}
+</script>
+<link rel="stylesheet" href="{% static 'django_exec_tool/exec_tool.css' %}">
+<script src="{% static 'django_exec_tool/exec_tool.js' %}"></script>
+{% endblock %}

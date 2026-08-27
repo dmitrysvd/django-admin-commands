@@ -1,0 +1,13 @@
+.exec-tool-output {
+  background: #1e1e1e;
+  color: #e6e6e6;
+  padding: 12px;
+  max-height: 60vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.45;
+  margin: 0;
+}

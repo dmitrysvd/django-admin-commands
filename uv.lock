@@ -663,7 +663,7 @@ wheels = [
 ]
 
 [[package]]
-name = "django-exec-tool"
+name = "django-admin-commands"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

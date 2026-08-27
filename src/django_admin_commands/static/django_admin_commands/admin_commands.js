@@ -5,7 +5,7 @@
  * инфраструктуре всего проекта. Инкрементальность даёт номер последнего чанка.
  */
 (function () {
-  var configEl = document.getElementById("exec-tool-config");
+  var configEl = document.getElementById("admin-commands-config");
   if (!configEl) return;
   var config = JSON.parse(configEl.textContent);
   var output = document.getElementById("run-output");
@@ -36,7 +36,7 @@
           setTimeout(poll, delay);
         } else {
           // Ещё один заход: последние строки могли не успеть долиться.
-          setTimeout(function () { if (!window.execToolDone) { window.execToolDone = true; poll(); } }, delay);
+          setTimeout(function () { if (!window.adminCommandsDone) { window.adminCommandsDone = true; poll(); } }, delay);
         }
       })
       .catch(function () { setTimeout(poll, delay * 5); });

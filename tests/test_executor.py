@@ -13,10 +13,10 @@ from typing import Any
 import pytest
 from django.core.files.storage import default_storage
 
-from django_exec_tool.executor import Supervisor, build_child_env, execute
-from django_exec_tool.models import Run, RunOutputChunk, RunStatus, StopMode
-from django_exec_tool.registry import registry
-from django_exec_tool.services import launch, request_stop
+from django_admin_commands.executor import Supervisor, build_child_env, execute
+from django_admin_commands.models import Run, RunOutputChunk, RunStatus, StopMode
+from django_admin_commands.registry import registry
+from django_admin_commands.services import launch, request_stop
 
 from .conftest import wait_finished, wait_for
 
@@ -57,14 +57,14 @@ def test_output_is_archived_and_chunks_purged(operator: Any) -> None:
 
 
 def test_archiving_can_be_disabled(operator: Any, settings: Any) -> None:
-    settings.EXEC_TOOL = {**settings.EXEC_TOOL, "ARCHIVE_OUTPUT": False}
+    settings.ADMIN_COMMANDS = {**settings.ADMIN_COMMANDS, "ARCHIVE_OUTPUT": False}
     run = run_now(operator, "demo_slow", {"seconds": 1, "fail": False, "mode": "fast"})
     assert run.log_path == ""
     assert RunOutputChunk.objects.filter(run=run).exists()
 
 
 def test_chunks_survive_when_purging_disabled(operator: Any, settings: Any) -> None:
-    settings.EXEC_TOOL = {**settings.EXEC_TOOL, "PURGE_CHUNKS_AFTER_ARCHIVE": False}
+    settings.ADMIN_COMMANDS = {**settings.ADMIN_COMMANDS, "PURGE_CHUNKS_AFTER_ARCHIVE": False}
     run = run_now(operator, "demo_slow", {"seconds": 1, "fail": False, "mode": "fast"})
     assert RunOutputChunk.objects.filter(run=run).exists()
     default_storage.delete(run.log_path)
@@ -82,7 +82,11 @@ def test_hard_stop_kills_the_process(operator: Any) -> None:
 
 
 def test_soft_stop_escalates_to_sigkill(operator: Any, settings: Any, override_spec: Any) -> None:
-    settings.EXEC_TOOL = {**settings.EXEC_TOOL, "TERMINATE_GRACE": 2, "HEARTBEAT_INTERVAL": 1}
+    settings.ADMIN_COMMANDS = {
+        **settings.ADMIN_COMMANDS,
+        "TERMINATE_GRACE": 2,
+        "HEARTBEAT_INTERVAL": 1,
+    }
     override_spec("demo_stubborn", timeout=120, interruptible=False)
     run = launch(operator, registry.get("demo_stubborn"), {"seconds": 120})
     assert wait_for(lambda: bool(Run.objects.get(pk=run.pk).pid))
@@ -95,7 +99,11 @@ def test_soft_stop_escalates_to_sigkill(operator: Any, settings: Any, override_s
 
 
 def test_timeout_stops_the_run(operator: Any, settings: Any, override_spec: Any) -> None:
-    settings.EXEC_TOOL = {**settings.EXEC_TOOL, "HEARTBEAT_INTERVAL": 1, "TERMINATE_GRACE": 2}
+    settings.ADMIN_COMMANDS = {
+        **settings.ADMIN_COMMANDS,
+        "HEARTBEAT_INTERVAL": 1,
+        "TERMINATE_GRACE": 2,
+    }
     override_spec("demo_slow", timeout=2, interruptible=True)
     run = launch(
         operator, registry.get("demo_slow"), {"seconds": 60, "fail": False, "mode": "fast"}
@@ -131,19 +139,19 @@ def test_supervisor_failure_is_recorded(monkeypatch: Any) -> None:
 
 
 def test_child_env_carries_settings_and_run_id(settings: Any) -> None:
-    settings.EXEC_TOOL = {**settings.EXEC_TOOL, "CHILD_ENV": {"DEMO_FLAG": "1"}}
+    settings.ADMIN_COMMANDS = {**settings.ADMIN_COMMANDS, "CHILD_ENV": {"DEMO_FLAG": "1"}}
     run = Run.objects.create(command="demo_slow", argv=[])
     env = build_child_env(run, registry.get("demo_slow"))
     assert env["DJANGO_SETTINGS_MODULE"] == os.environ.get(
         "DJANGO_SETTINGS_MODULE", "demo.settings"
     )
     assert env["PYTHONUNBUFFERED"] == "1"
-    assert env["EXEC_TOOL_RUN_ID"] == str(run.pk)
+    assert env["ADMIN_COMMANDS_RUN_ID"] == str(run.pk)
     assert env["DEMO_FLAG"] == "1"
 
 
 def test_signal_group_falls_back_to_single_process(monkeypatch: Any) -> None:
-    from django_exec_tool import executor
+    from django_admin_commands import executor
 
     calls: list = []
     monkeypatch.setattr(executor.os, "killpg", lambda *a: (_ for _ in ()).throw(ProcessLookupError))

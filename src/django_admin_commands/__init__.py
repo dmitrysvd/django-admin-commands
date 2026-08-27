@@ -1,4 +1,4 @@
-"""django-exec-tool — безопасный запуск management-команд из админки."""
+"""django-admin-commands — безопасный запуск management-команд из админки."""
 
 from __future__ import annotations
 

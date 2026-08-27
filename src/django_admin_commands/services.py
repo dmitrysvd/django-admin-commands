@@ -14,7 +14,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from .conf import exec_tool_settings
+from .conf import app_settings
 from .forms import build_argv
 from .models import CommandState, EnqueueLock, Run, RunStatus, StopMode
 from .policy import can_run
@@ -48,7 +48,7 @@ def check_admission(spec: CommandSpec, lock_key: str | None) -> None:
     if not is_enabled(spec):
         raise LaunchRejected(_("Команда сейчас выключена администратором."))
     total_active = Run.objects.active().count()
-    if total_active >= exec_tool_settings.MAX_PARALLEL_RUNS:
+    if total_active >= app_settings.MAX_PARALLEL_RUNS:
         raise LaunchRejected(
             _("Сейчас слишком много активных запусков (%(count)d). Попробуйте позже.")
             % {"count": total_active}
@@ -87,7 +87,7 @@ def launch(
             reason=reason,
         )
 
-    runner = exec_tool_settings.RUNNER()
+    runner = app_settings.RUNNER()
     # Раннера дёргаем после коммита: иначе он может взять строку, которой в БД
     # ещё нет.
     transaction.on_commit(lambda: runner.enqueue(run))

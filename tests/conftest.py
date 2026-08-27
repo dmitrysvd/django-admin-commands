@@ -6,8 +6,8 @@ from typing import Any, Callable, Iterator
 import pytest
 from django.contrib.auth.models import Permission, User
 
-from django_exec_tool.models import Run
-from django_exec_tool.registry import CommandSpec, registry
+from django_admin_commands.models import Run
+from django_admin_commands.registry import CommandSpec, registry
 
 
 @pytest.fixture

@@ -5,31 +5,31 @@ from typing import Any
 import pytest
 from django.contrib.auth.models import AnonymousUser
 
-from django_exec_tool.conf import exec_tool_settings
-from django_exec_tool.policy import can_run, can_use_tool, default_policy
-from django_exec_tool.registry import CommandSpec
-from django_exec_tool.runners.base import BaseRunner
-from django_exec_tool.runners.thread import ThreadRunner
+from django_admin_commands.conf import app_settings
+from django_admin_commands.policy import can_run, can_use_tool, default_policy
+from django_admin_commands.registry import CommandSpec
+from django_admin_commands.runners.base import BaseRunner
+from django_admin_commands.runners.thread import ThreadRunner
 
 
 def test_defaults_are_used(settings: Any) -> None:
-    settings.EXEC_TOOL = {}
-    assert exec_tool_settings.DEFAULT_TIMEOUT == 900
+    settings.ADMIN_COMMANDS = {}
+    assert app_settings.DEFAULT_TIMEOUT == 900
 
 
 def test_override_is_picked_up(settings: Any) -> None:
-    settings.EXEC_TOOL = {"DEFAULT_TIMEOUT": 5}
-    assert exec_tool_settings.DEFAULT_TIMEOUT == 5
+    settings.ADMIN_COMMANDS = {"DEFAULT_TIMEOUT": 5}
+    assert app_settings.DEFAULT_TIMEOUT == 5
 
 
 def test_import_strings_are_resolved(settings: Any) -> None:
-    settings.EXEC_TOOL = {"RUNNER": "django_exec_tool.runners.thread.ThreadRunner"}
-    assert exec_tool_settings.RUNNER is ThreadRunner
+    settings.ADMIN_COMMANDS = {"RUNNER": "django_admin_commands.runners.thread.ThreadRunner"}
+    assert app_settings.RUNNER is ThreadRunner
 
 
 def test_unknown_setting_raises() -> None:
     with pytest.raises(AttributeError):
-        _ = exec_tool_settings.NOPE
+        _ = app_settings.NOPE
 
 
 def test_base_runner_is_abstract() -> None:
@@ -57,8 +57,8 @@ def test_extra_permission_is_checked(operator: Any) -> None:
 
 
 def test_cache_is_reset_only_for_our_setting(settings: Any) -> None:
-    settings.EXEC_TOOL = {"DEFAULT_TIMEOUT": 11}
-    assert exec_tool_settings.DEFAULT_TIMEOUT == 11
+    settings.ADMIN_COMMANDS = {"DEFAULT_TIMEOUT": 11}
+    assert app_settings.DEFAULT_TIMEOUT == 11
     # Чужая настройка кэш трогать не должна.
     settings.DEBUG = not settings.DEBUG
-    assert exec_tool_settings.DEFAULT_TIMEOUT == 11
+    assert app_settings.DEFAULT_TIMEOUT == 11

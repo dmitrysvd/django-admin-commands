@@ -63,7 +63,7 @@ class RunAdmin(admin.ModelAdmin):
     list_filter = ("status", "command")
     search_fields = ("command", "requested_by_repr", "reason", "id")
     date_hierarchy = "created_at"
-    change_form_template = "django_exec_tool/run_detail.html"
+    change_form_template = "django_admin_commands/run_detail.html"
 
     # -- журнал неизменяем ------------------------------------------------
 
@@ -104,10 +104,10 @@ class RunAdmin(admin.ModelAdmin):
     def get_urls(self) -> list[Any]:
         view = self.admin_site.admin_view
         custom = [
-            path("launch/", view(self.command_list_view), name="exec_tool_command_list"),
-            path("launch/<str:name>/", view(self.launch_view), name="exec_tool_launch"),
-            path("<uuid:pk>/output/", view(self.output_view), name="exec_tool_output"),
-            path("<uuid:pk>/stop/", view(self.stop_view), name="exec_tool_stop"),
+            path("launch/", view(self.command_list_view), name="admin_commands_list"),
+            path("launch/<str:name>/", view(self.launch_view), name="admin_commands_launch"),
+            path("<uuid:pk>/output/", view(self.output_view), name="admin_commands_output"),
+            path("<uuid:pk>/stop/", view(self.stop_view), name="admin_commands_stop"),
         ]
         return custom + super().get_urls()
 
@@ -128,13 +128,13 @@ class RunAdmin(admin.ModelAdmin):
                     "spec": spec,
                     "allowed": can_run(request.user, spec),
                     "enabled": is_enabled(spec),
-                    "url": reverse("admin:exec_tool_launch", args=[spec.name]),
+                    "url": reverse("admin:admin_commands_launch", args=[spec.name]),
                     "active": Run.objects.active().filter(command=spec.name).count(),
                 }
             )
         return render(
             request,
-            "django_exec_tool/command_list.html",
+            "django_admin_commands/command_list.html",
             self._context(request, title=_("Запуск команды"), commands=commands),
         )
 
@@ -150,7 +150,7 @@ class RunAdmin(admin.ModelAdmin):
             form_class = build_form_class(spec)
         except UnsupportedCommand as exc:
             self.message_user(request, str(exc), level=messages.ERROR)
-            return redirect("admin:exec_tool_command_list")
+            return redirect("admin:admin_commands_list")
 
         form = form_class(request.POST or None)
         if request.method == "POST" and form.is_valid():
@@ -159,11 +159,11 @@ class RunAdmin(admin.ModelAdmin):
             except LaunchRejected as exc:
                 form.add_error(None, str(exc))
             else:
-                return redirect("admin:django_exec_tool_run_change", run.pk)
+                return redirect("admin:admin_commands_run_change", run.pk)
 
         return render(
             request,
-            "django_exec_tool/launch.html",
+            "django_admin_commands/launch.html",
             self._context(
                 request,
                 title=_("Запуск: %s") % spec.label,
@@ -191,8 +191,8 @@ class RunAdmin(admin.ModelAdmin):
             arguments=list(describe_arguments(run.arguments)),
             can_stop=can_use_tool(request.user) and run.is_active,
             stop_modes=StopMode.choices,
-            output_url=reverse("admin:exec_tool_output", args=[run.pk]),
-            stop_url=reverse("admin:exec_tool_stop", args=[run.pk]),
+            output_url=reverse("admin:admin_commands_output", args=[run.pk]),
+            stop_url=reverse("admin:admin_commands_stop", args=[run.pk]),
         )
         return render(request, self.change_form_template, context)
 
@@ -230,4 +230,4 @@ class RunAdmin(admin.ModelAdmin):
             self.message_user(request, str(exc), level=messages.WARNING)
         else:
             self.message_user(request, _("Остановка запрошена (%s).") % mode)
-        return redirect("admin:django_exec_tool_run_change", run.pk)
+        return redirect("admin:admin_commands_run_change", run.pk)

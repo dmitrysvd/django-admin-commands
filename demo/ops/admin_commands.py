@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from django_exec_tool import CommandSpec, registry
+from django_admin_commands import CommandSpec, registry
 
 registry.register(
     CommandSpec(
@@ -17,7 +17,7 @@ registry.register(
         interruptible=True,
         idempotent=True,
         nice=10,
-        queue="exec_tool",
+        queue="admin_commands",
     )
 )
 
@@ -29,7 +29,7 @@ registry.register(
         timeout=60,
         idempotent=True,
         confirm=True,
-        queue="exec_tool",
+        queue="admin_commands",
         # Аргумент зафиксирован спекой: в форме его нет, но в argv он попадёт.
         fixed_arguments={"ratio": 2.0},
         lock_key=lambda arguments: arguments.get("target"),

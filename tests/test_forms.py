@@ -5,7 +5,7 @@ from typing import Any
 
 import pytest
 
-from django_exec_tool.forms import (
+from django_admin_commands.forms import (
     UnsupportedCommand,
     build_argv,
     build_form_class,
@@ -14,7 +14,7 @@ from django_exec_tool.forms import (
     parse_or_none,
     visible_actions,
 )
-from django_exec_tool.registry import CommandSpec, registry
+from django_admin_commands.registry import CommandSpec, registry
 
 
 @pytest.fixture
@@ -98,7 +98,7 @@ def test_count_and_const_actions() -> None:
 
 
 def build_argv_for(action: argparse.Action, value: Any) -> list:
-    from django_exec_tool.forms import _argv_for_action
+    from django_admin_commands.forms import _argv_for_action
 
     return _argv_for_action(action, value)
 

@@ -10,7 +10,7 @@ from .executor import execute
 
 
 @shared_task(
-    name="django_exec_tool.execute_run",
+    name="django_admin_commands.execute_run",
     # Подтверждаем задачу сразу: при acks_late убийство воркера привело бы к
     # повторной доставке, то есть к повторному запуску неидемпотентной команды
     # на проде. Потерянный запуск безопаснее продублированного — его поймает

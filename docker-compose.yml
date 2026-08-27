@@ -23,12 +23,12 @@ services:
     build: .
     command: >
       sh -c "python manage.py migrate &&
-             python manage.py exec_tool_demo_user &&
+             python manage.py demo_user &&
              python manage.py runserver 0.0.0.0:8000"
     environment: &env
       POSTGRES_HOST: db
       CELERY_BROKER_URL: redis://redis:6379/0
-      EXEC_TOOL_RUNNER: django_exec_tool.runners.celery.CeleryRunner
+      ADMIN_COMMANDS_RUNNER: django_admin_commands.runners.celery.CeleryRunner
       DJANGO_SETTINGS_MODULE: demo.settings
     volumes:
       - .:/app
@@ -43,7 +43,7 @@ services:
 
   worker:
     build: .
-    command: celery -A demo.celery worker -Q exec_tool,celery -l info --concurrency 2
+    command: celery -A demo.celery worker -Q admin_commands,celery -l info --concurrency 2
     environment: *env
     volumes:
       - .:/app
@@ -57,7 +57,7 @@ services:
   # Жнец: без него потерянные запуски навсегда остаются в статусе «выполняется».
   reaper:
     build: .
-    command: sh -c "while true; do python manage.py exec_tool_reap; sleep 30; done"
+    command: sh -c "while true; do python manage.py admin_commands_reap; sleep 30; done"
     environment: *env
     volumes:
       - .:/app

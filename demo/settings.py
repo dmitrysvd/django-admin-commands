@@ -18,7 +18,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "django_exec_tool",
+    "django_admin_commands",
     "demo.ops",
 ]
 
@@ -77,10 +77,10 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_URL = "/media/"
 
-EXEC_TOOL = {
+ADMIN_COMMANDS = {
     # В docker-compose подставляется CeleryRunner, локально хватает потока.
     "RUNNER": os.environ.get(
-        "EXEC_TOOL_RUNNER", "django_exec_tool.runners.thread.ThreadRunner"
+        "ADMIN_COMMANDS_RUNNER", "django_admin_commands.runners.thread.ThreadRunner"
     ),
     "MAX_PARALLEL_RUNS": 3,
     "HEARTBEAT_INTERVAL": 2,

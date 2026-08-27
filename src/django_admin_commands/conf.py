@@ -1,10 +1,10 @@
-"""Доступ к настройкам django-exec-tool.
+"""Доступ к настройкам django-admin-commands.
 
-Все параметры лежат в одном словаре ``EXEC_TOOL`` в настройках проекта, чтобы
+Все параметры лежат в одном словаре ``ADMIN_COMMANDS`` в настройках проекта, чтобы
 не засорять глобальное пространство имён::
 
-    EXEC_TOOL = {
-        "RUNNER": "django_exec_tool.runners.thread.ThreadRunner",
+    ADMIN_COMMANDS = {
+        "RUNNER": "django_admin_commands.runners.thread.ThreadRunner",
         "DEFAULT_TIMEOUT": 900,
     }
 """
@@ -20,7 +20,7 @@ from django.utils.module_loading import import_string
 
 DEFAULTS: dict[str, Any] = {
     # Путь импорта раннера, который забирает pending-запуск и начинает исполнение.
-    "RUNNER": "django_exec_tool.runners.thread.ThreadRunner",
+    "RUNNER": "django_admin_commands.runners.thread.ThreadRunner",
     # Потолок времени выполнения, если команда не объявила собственный таймаут.
     "DEFAULT_TIMEOUT": 900,
     # Период записи heartbeat; он же интервал опроса запроса на остановку.
@@ -36,7 +36,7 @@ DEFAULTS: dict[str, Any] = {
     "TAIL_BYTES": 64 * 1024,
     # Складывать полный лог в default_storage по завершении запуска.
     "ARCHIVE_OUTPUT": True,
-    "ARCHIVE_DIR": "exec_tool/logs",
+    "ARCHIVE_DIR": "admin_commands/logs",
     # Удалять чанки живого вывода после архивации полного лога.
     "PURGE_CHUNKS_AFTER_ARCHIVE": True,
     # Просить ядро убить потомка вместе с супервизором (только Linux).
@@ -44,14 +44,14 @@ DEFAULTS: dict[str, Any] = {
     # Дополнительные переменные окружения для дочернего процесса.
     "CHILD_ENV": {},
     # Право, без которого инструмент недоступен вообще.
-    "PERMISSION": "django_exec_tool.run_command",
+    "PERMISSION": "admin_commands.run_command",
     # Вызываемое ``(user, spec, arguments) -> bool``; единственная точка проверки прав.
-    "POLICY": "django_exec_tool.policy.default_policy",
+    "POLICY": "django_admin_commands.policy.default_policy",
 }
 
 
-class ExecToolSettings:
-    """Ленивое представление ``settings.EXEC_TOOL`` с подставленными умолчаниями."""
+class AppSettings:
+    """Ленивое представление ``settings.ADMIN_COMMANDS`` с подставленными умолчаниями."""
 
     _IMPORT_STRINGS = frozenset({"RUNNER", "POLICY"})
 
@@ -60,10 +60,10 @@ class ExecToolSettings:
 
     def __getattr__(self, name: str) -> Any:
         if name not in DEFAULTS:
-            raise AttributeError(f"Unknown EXEC_TOOL setting: {name!r}")
+            raise AttributeError(f"Unknown ADMIN_COMMANDS setting: {name!r}")
         if name in self._cache:
             return self._cache[name]
-        value = getattr(settings, "EXEC_TOOL", {}).get(name, DEFAULTS[name])
+        value = getattr(settings, "ADMIN_COMMANDS", {}).get(name, DEFAULTS[name])
         if name in self._IMPORT_STRINGS and isinstance(value, str):
             value = import_string(value)
         self._cache[name] = value
@@ -73,11 +73,11 @@ class ExecToolSettings:
         self._cache.clear()
 
 
-exec_tool_settings = ExecToolSettings()
+app_settings = AppSettings()
 
 
 @receiver(setting_changed)
 def _reset_settings(sender: Any, setting: str, **kwargs: Any) -> None:
     # Нужно, чтобы override_settings в тестах не подсовывал устаревший кэш.
-    if setting == "EXEC_TOOL":
-        exec_tool_settings.reset()
+    if setting == "ADMIN_COMMANDS":
+        app_settings.reset()

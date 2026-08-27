@@ -5,9 +5,9 @@
 Поэтому добавление команды проходит через ревью кода и оставляет след в истории
 версий.
 
-Регистрировать команды следует в модуле ``exec_commands.py`` любого приложения::
+Регистрировать команды следует в модуле ``admin_commands.py`` любого приложения::
 
-    from django_exec_tool import CommandSpec, registry
+    from django_admin_commands import CommandSpec, registry
 
     registry.register(
         CommandSpec(
@@ -75,9 +75,9 @@ class CommandSpec:
         return self.title or self.name
 
     def effective_timeout(self) -> int:
-        from .conf import exec_tool_settings
+        from .conf import app_settings
 
-        return self.timeout or exec_tool_settings.DEFAULT_TIMEOUT
+        return self.timeout or app_settings.DEFAULT_TIMEOUT
 
     def resolve_lock_key(self, arguments: dict[str, Any]) -> str | None:
         if self.lock_key is None:
@@ -89,7 +89,7 @@ class CommandSpec:
         app_name = get_commands().get(self.name)
         if app_name is None:
             raise CommandNotRegistered(
-                f"Команда {self.name!r} зарегистрирована в django-exec-tool, "
+                f"Команда {self.name!r} зарегистрирована в django-admin-commands, "
                 f"но отсутствует в проекте."
             )
         if not isinstance(app_name, str):  # уже готовый экземпляр BaseCommand
@@ -120,7 +120,7 @@ class Registry:
     def autodiscover(self) -> None:
         if not self._discovered:
             self._discovered = True
-            autodiscover_modules("exec_commands")
+            autodiscover_modules("admin_commands")
 
     def get(self, name: str) -> CommandSpec:
         self.autodiscover()

@@ -5,7 +5,7 @@ from typing import Any
 
 import pytest
 
-from django_exec_tool.registry import CommandNotRegistered, CommandSpec, Registry, registry
+from django_admin_commands.registry import CommandNotRegistered, CommandSpec, Registry, registry
 
 
 def test_register_and_lookup() -> None:
@@ -50,7 +50,7 @@ def test_label_falls_back_to_name() -> None:
 
 
 def test_effective_timeout_uses_default(settings: Any) -> None:
-    settings.EXEC_TOOL = {"DEFAULT_TIMEOUT": 42}
+    settings.ADMIN_COMMANDS = {"DEFAULT_TIMEOUT": 42}
     assert CommandSpec(name="alpha").effective_timeout() == 42
     assert CommandSpec(name="alpha", timeout=7).effective_timeout() == 7
 
@@ -67,9 +67,9 @@ def test_load_command_for_unknown_command() -> None:
 
 
 def test_load_command_accepts_command_instance(monkeypatch: Any) -> None:
-    # ``django_exec_tool.registry`` перекрыт объектом реестра, поэтому берём
+    # ``django_admin_commands.registry`` перекрыт объектом реестра, поэтому берём
     # сам модуль из sys.modules.
-    registry_module = sys.modules["django_exec_tool.registry"]
+    registry_module = sys.modules["django_admin_commands.registry"]
 
     sentinel = object()
     monkeypatch.setattr(registry_module, "get_commands", lambda: {"alpha": sentinel})

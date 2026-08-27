@@ -7,7 +7,7 @@ import pytest
 from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 
-from django_exec_tool.models import (
+from django_admin_commands.models import (
     CommandState,
     EnqueueLock,
     Run,
@@ -15,8 +15,8 @@ from django_exec_tool.models import (
     RunStatus,
     StopMode,
 )
-from django_exec_tool.registry import registry
-from django_exec_tool.services import (
+from django_admin_commands.registry import registry
+from django_admin_commands.services import (
     LaunchRejected,
     launch,
     reap_lost_runs,
@@ -35,7 +35,7 @@ def quiet_runner(monkeypatch: Any, settings: Any) -> list:
         def enqueue(self, run: Run) -> None:
             started.append(run)
 
-    settings.EXEC_TOOL = {**settings.EXEC_TOOL, "RUNNER": DummyRunner}
+    settings.ADMIN_COMMANDS = {**settings.ADMIN_COMMANDS, "RUNNER": DummyRunner}
     return started
 
 
@@ -110,7 +110,7 @@ def test_max_parallel_per_command(operator: Any, quiet_runner: list) -> None:
 
 
 def test_global_parallel_limit(operator: Any, quiet_runner: list, settings: Any) -> None:
-    settings.EXEC_TOOL = {**settings.EXEC_TOOL, "MAX_PARALLEL_RUNS": 1}
+    settings.ADMIN_COMMANDS = {**settings.ADMIN_COMMANDS, "MAX_PARALLEL_RUNS": 1}
     launch(operator, registry.get("demo_slow"), {"seconds": 1})
     with pytest.raises(LaunchRejected):
         launch(operator, registry.get("demo_report"), {"target": "a"})
@@ -150,7 +150,11 @@ def test_request_stop_requires_permission(outsider: Any) -> None:
 
 
 def test_reap_marks_stale_runs_unknown(settings: Any) -> None:
-    settings.EXEC_TOOL = {**settings.EXEC_TOOL, "HEARTBEAT_INTERVAL": 1, "HEARTBEAT_MISS_FACTOR": 2}
+    settings.ADMIN_COMMANDS = {
+        **settings.ADMIN_COMMANDS,
+        "HEARTBEAT_INTERVAL": 1,
+        "HEARTBEAT_MISS_FACTOR": 2,
+    }
     fresh = make_run(heartbeat_at=timezone.now())
     lost = make_run(heartbeat_at=timezone.now() - timedelta(seconds=30))
     assert reap_lost_runs() == 1

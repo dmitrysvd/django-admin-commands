@@ -54,12 +54,12 @@
 
 <div class="module">
   <h2>{% trans "Вывод" %}</h2>
-  <pre id="run-output" class="exec-tool-output"></pre>
+  <pre id="run-output" class="admin-commands-output"></pre>
 </div>
 
-<script id="exec-tool-config" type="application/json">
+<script id="admin-commands-config" type="application/json">
   {"outputUrl": "{{ output_url }}", "active": {{ run.is_active|yesno:"true,false" }}}
 </script>
-<link rel="stylesheet" href="{% static 'django_exec_tool/exec_tool.css' %}">
-<script src="{% static 'django_exec_tool/exec_tool.js' %}"></script>
+<link rel="stylesheet" href="{% static 'django_admin_commands/admin_commands.css' %}">
+<script src="{% static 'django_admin_commands/admin_commands.js' %}"></script>
 {% endblock %}

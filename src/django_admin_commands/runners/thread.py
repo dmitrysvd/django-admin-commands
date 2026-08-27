@@ -19,6 +19,6 @@ class ThreadRunner(BaseRunner):
         from ..executor import execute
 
         thread = threading.Thread(
-            target=execute, args=(run.pk,), name=f"exec-tool-{run.pk}", daemon=True
+            target=execute, args=(run.pk,), name=f"admin-commands-{run.pk}", daemon=True
         )
         thread.start()

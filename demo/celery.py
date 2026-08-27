@@ -12,4 +12,4 @@ app = Celery("demo")
 app.config_from_object("django.conf:settings", namespace="CELERY")
 app.autodiscover_tasks()
 # Задача инструмента лежит в его собственном модуле, а не в приложении проекта.
-app.autodiscover_tasks(["django_exec_tool"], related_name="tasks")
+app.autodiscover_tasks(["django_admin_commands"], related_name="tasks")

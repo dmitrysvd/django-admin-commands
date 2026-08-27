@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "django-exec-tool"
+name = "django-admin-commands"
 version = "0.1.0"
 description = "Safe, auditable execution of whitelisted Django management commands from the admin UI"
 readme = "README.md"
@@ -28,7 +28,7 @@ dependencies = ["Django>=3.2"]
 celery = ["celery>=5.0"]
 
 [project.urls]
-Homepage = "https://github.com/example/django-exec-tool"
+Homepage = "https://github.com/example/django-admin-commands"
 
 [dependency-groups]
 dev = [
@@ -43,7 +43,7 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/django_exec_tool"]
+packages = ["src/django_admin_commands"]
 
 [tool.ruff]
 line-length = 100
@@ -58,17 +58,17 @@ select = ["E", "F", "W", "I", "UP", "B", "C4", "DJ", "SIM", "RUF", "ANN"]
 ignore = ["ANN401", "RUF012", "RUF001", "RUF002", "RUF003"]
 
 [tool.ruff.lint.per-file-ignores]
-"src/django_exec_tool/migrations/*" = ["E501"]
+"src/django_admin_commands/migrations/*" = ["E501"]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "demo.settings"
 python_files = ["test_*.py"]
 pythonpath = ["."]
-addopts = "--cov=django_exec_tool --cov-report=term-missing --cov-fail-under=100"
+addopts = "--cov=django_admin_commands --cov-report=term-missing --cov-fail-under=100"
 
 [tool.coverage.run]
 branch = true
-source = ["src/django_exec_tool"]
+source = ["src/django_admin_commands"]
 omit = ["*/migrations/*"]
 
 [tool.coverage.report]

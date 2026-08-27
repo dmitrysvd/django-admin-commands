@@ -18,7 +18,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from .conf import exec_tool_settings
+from .conf import app_settings
 
 
 class RunStatus(models.TextChoices):
@@ -104,7 +104,7 @@ class RunQuerySet(models.QuerySet):
         """Запуски, супервизор которых перестал отчитываться."""
         now = now or timezone.now()
         deadline = now - timedelta(
-            seconds=exec_tool_settings.HEARTBEAT_INTERVAL * exec_tool_settings.HEARTBEAT_MISS_FACTOR
+            seconds=app_settings.HEARTBEAT_INTERVAL * app_settings.HEARTBEAT_MISS_FACTOR
         )
         return self.filter(status=RunStatus.RUNNING, heartbeat_at__lt=deadline)
 
@@ -142,7 +142,7 @@ class Run(models.Model):
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
-        related_name="exec_tool_runs",
+        related_name="admin_commands_runs",
     )
     #: Снимок инициатора; переживает удаление аккаунта — журнал аудита обязан.
     requested_by_repr = models.CharField(_("кто запустил (снимок)"), max_length=255, blank=True)

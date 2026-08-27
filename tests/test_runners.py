@@ -5,9 +5,9 @@ from typing import Any
 import pytest
 from django.core.management import call_command
 
-from django_exec_tool.models import Run, RunStatus
-from django_exec_tool.runners.celery import CeleryRunner
-from django_exec_tool.runners.thread import ThreadRunner
+from django_admin_commands.models import Run, RunStatus
+from django_admin_commands.runners.celery import CeleryRunner
+from django_admin_commands.runners.thread import ThreadRunner
 
 from .conftest import wait_finished
 
@@ -23,7 +23,7 @@ def test_thread_runner_executes_the_run(operator: Any) -> None:
 
 
 def test_celery_runner_dispatches_the_task(monkeypatch: Any, override_spec: Any) -> None:
-    from django_exec_tool import tasks
+    from django_admin_commands import tasks
 
     # Без объявленной очереди задача уходит в очередь по умолчанию.
     override_spec("demo_slow")
@@ -47,7 +47,7 @@ def test_celery_runner_dispatches_the_task(monkeypatch: Any, override_spec: Any)
 
 
 def test_celery_runner_uses_the_declared_queue(monkeypatch: Any, override_spec: Any) -> None:
-    from django_exec_tool import tasks
+    from django_admin_commands import tasks
 
     override_spec("demo_slow", queue="ops")
     captured: dict = {}
@@ -66,7 +66,7 @@ def test_celery_runner_uses_the_declared_queue(monkeypatch: Any, override_spec: 
 
 
 def test_celery_task_delegates_to_the_executor(monkeypatch: Any) -> None:
-    from django_exec_tool import tasks
+    from django_admin_commands import tasks
 
     monkeypatch.setattr(tasks, "execute", lambda run_id: f"executed:{run_id}")
     assert tasks.execute_run("abc") == "executed:abc"
@@ -77,11 +77,15 @@ def test_reap_management_command(settings: Any, capsys: Any) -> None:
 
     from django.utils import timezone
 
-    settings.EXEC_TOOL = {**settings.EXEC_TOOL, "HEARTBEAT_INTERVAL": 1, "HEARTBEAT_MISS_FACTOR": 2}
+    settings.ADMIN_COMMANDS = {
+        **settings.ADMIN_COMMANDS,
+        "HEARTBEAT_INTERVAL": 1,
+        "HEARTBEAT_MISS_FACTOR": 2,
+    }
     Run.objects.create(
         command="demo_slow",
         status=RunStatus.RUNNING,
         heartbeat_at=timezone.now() - timedelta(minutes=5),
     )
-    call_command("exec_tool_reap")
+    call_command("admin_commands_reap")
     assert "Помечено потерянными: 1" in capsys.readouterr().out

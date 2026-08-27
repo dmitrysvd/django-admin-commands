@@ -36,7 +36,7 @@ from django.core.files.storage import default_storage
 from django.db import close_old_connections, transaction
 from django.utils import timezone
 
-from .conf import exec_tool_settings
+from .conf import app_settings
 from .models import Run, RunOutputChunk, RunStatus, StopMode
 from .registry import CommandSpec
 
@@ -62,15 +62,15 @@ def build_child_env(run: Run, spec: CommandSpec) -> dict[str, str]:
         env.setdefault("DJANGO_SETTINGS_MODULE", settings.SETTINGS_MODULE)
     # Без этого вывод придёт большими блоками в конце, а не по ходу дела.
     env["PYTHONUNBUFFERED"] = "1"
-    env["EXEC_TOOL_RUN_ID"] = str(run.pk)
-    env.update({str(k): str(v) for k, v in exec_tool_settings.CHILD_ENV.items()})
+    env["ADMIN_COMMANDS_RUN_ID"] = str(run.pk)
+    env.update({str(k): str(v) for k, v in app_settings.CHILD_ENV.items()})
     return env
 
 
 def _child_setup(spec: CommandSpec) -> None:  # pragma: no cover - выполняется в потомке
     """Выполняется в дочернем процессе между fork и exec."""
     os.setsid()
-    if exec_tool_settings.PARENT_DEATH_SIGNAL and sys.platform.startswith("linux"):
+    if app_settings.PARENT_DEATH_SIGNAL and sys.platform.startswith("linux"):
         with contextlib.suppress(OSError):
             ctypes.CDLL("libc.so.6", use_errno=True).prctl(PR_SET_PDEATHSIG, signal.SIGTERM)
     if spec.nice:
@@ -100,7 +100,7 @@ class OutputCollector:
         self._seq = 0
         self._total = 0
         self._tail = ""
-        self._tail_limit = exec_tool_settings.TAIL_BYTES
+        self._tail_limit = app_settings.TAIL_BYTES
 
     def reader(self, stream: Any) -> None:
         for line in iter(stream.readline, b""):
@@ -130,13 +130,13 @@ class OutputCollector:
 
     def archive(self) -> str:
         """Сложить полный лог в default_storage и вернуть путь."""
-        if not exec_tool_settings.ARCHIVE_OUTPUT or not self._total:
+        if not app_settings.ARCHIVE_OUTPUT or not self._total:
             return ""
         chunks = RunOutputChunk.objects.filter(run=self.run).order_by("seq")
         content = "".join(chunk.text for chunk in chunks.iterator())
-        path = f"{exec_tool_settings.ARCHIVE_DIR.rstrip('/')}/{self.run.pk}.log"
+        path = f"{app_settings.ARCHIVE_DIR.rstrip('/')}/{self.run.pk}.log"
         saved = default_storage.save(path, ContentFile(content.encode("utf-8")))
-        if exec_tool_settings.PURGE_CHUNKS_AFTER_ARCHIVE:
+        if app_settings.PURGE_CHUNKS_AFTER_ARCHIVE:
             RunOutputChunk.objects.filter(run=self.run).delete()
         return saved
 
@@ -211,7 +211,7 @@ class Supervisor:
             return
         if self.stop_mode == StopMode.HARD:
             return
-        if time.monotonic() - self.signalled_at > exec_tool_settings.TERMINATE_GRACE:
+        if time.monotonic() - self.signalled_at > app_settings.TERMINATE_GRACE:
             _signal_group(proc.pid, signal.SIGKILL)
             self.escalated = True
 
@@ -248,7 +248,7 @@ class Supervisor:
 
         started = time.monotonic()
         last_beat = 0.0
-        interval = exec_tool_settings.HEARTBEAT_INTERVAL
+        interval = app_settings.HEARTBEAT_INTERVAL
         try:
             while True:
                 exit_code = proc.poll()

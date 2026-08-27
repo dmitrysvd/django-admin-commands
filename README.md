@@ -1,4 +1,4 @@
-# django-exec-tool
+# django-admin-commands
 
 Запуск management-команд Django из админки: с белым списком, аудитом и —
 главное — с возможностью остановить то, что уже бежит.
@@ -10,7 +10,7 @@
 ## Что внутри
 
 * **Белый список в коде.** Команда становится запускаемой, только если её
-  зарегистрировали в `exec_commands.py`. Конфигурация в БД может лишь
+  зарегистрировали в `admin_commands.py`. Конфигурация в БД может лишь
   *выключить* команду, но никогда не добавить новую: иначе любой, у кого есть
   доступ к инструменту, выдал бы себе запуск чего угодно.
 * **Форма вместо строки аргументов.** Поля генерируются из `argparse`-парсера
@@ -34,14 +34,14 @@
 ## Установка
 
 ```bash
-pip install django-exec-tool
+pip install django-admin-commands
 ```
 
 ```python
 INSTALLED_APPS = [
     ...,
     "django.contrib.admin",
-    "django_exec_tool",
+    "django_admin_commands",
 ]
 ```
 
@@ -49,15 +49,15 @@ INSTALLED_APPS = [
 python manage.py migrate
 ```
 
-Дальше выдайте нужным людям право `django_exec_tool.run_command` — и всё,
+Дальше выдайте нужным людям право `django_admin_commands.run_command` — и всё,
 интерфейс появится в админке.
 
 ## Регистрация команды
 
-`myapp/exec_commands.py`:
+`myapp/admin_commands.py`:
 
 ```python
-from django_exec_tool import CommandSpec, registry
+from django_admin_commands import CommandSpec, registry
 
 registry.register(
     CommandSpec(
@@ -65,9 +65,9 @@ registry.register(
         title="Пересчёт статистики",
         description="Полный пересчёт витрин. Тяжёлая, но безопасная к перезапуску.",
         timeout=3600,
-        interruptible=True,   # команда переживает прерывание
-        idempotent=True,      # повторный запуск с нуля безвреден
-        nice=10,              # не конкурировать с прод-трафиком за CPU
+        interruptible=True,  # команда переживает прерывание
+        idempotent=True,  # повторный запуск с нуля безвреден
+        nice=10,  # не конкурировать с прод-трафиком за CPU
         max_parallel=1,
         lock_key=lambda arguments: arguments.get("tenant"),
     )
@@ -85,8 +85,8 @@ registry.register(
 Всё в одном словаре:
 
 ```python
-EXEC_TOOL = {
-    "RUNNER": "django_exec_tool.runners.celery.CeleryRunner",
+ADMIN_COMMANDS = {
+    "RUNNER": "django_admin_commands.runners.celery.CeleryRunner",
     "DEFAULT_TIMEOUT": 900,
     "MAX_PARALLEL_RUNS": 3,
     "HEARTBEAT_INTERVAL": 5,
@@ -95,7 +95,7 @@ EXEC_TOOL = {
 }
 ```
 
-Полный список с пояснениями — в `django_exec_tool/conf.py`.
+Полный список с пояснениями — в `django_admin_commands/conf.py`.
 
 ### Раннеры
 
@@ -109,7 +109,7 @@ EXEC_TOOL = {
 ### Обязательный жнец
 
 ```
-*/1 * * * * python manage.py exec_tool_reap
+*/1 * * * * python manage.py admin_commands_reap
 ```
 
 Без него запуски, чей супервизор умер, навсегда останутся в статусе

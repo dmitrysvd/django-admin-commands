@@ -1,0 +1,69 @@
+# Демо-стенд: админка, Postgres и отдельный celery-воркер.
+#
+# Веб и воркер — разные контейнеры намеренно: так видно главное свойство
+# конструкции. Команду запускает воркер, кнопку «остановить» жмут в вебе, и
+# сигнал доходит через строку в БД, а не через какой-либо прямой канал.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: demo
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: demo
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U demo"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+
+  web:
+    build: .
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py exec_tool_demo_user &&
+             python manage.py runserver 0.0.0.0:8000"
+    environment: &env
+      POSTGRES_HOST: db
+      CELERY_BROKER_URL: redis://redis:6379/0
+      EXEC_TOOL_RUNNER: django_exec_tool.runners.celery.CeleryRunner
+      DJANGO_SETTINGS_MODULE: demo.settings
+    volumes:
+      - .:/app
+      - media:/app/media
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  worker:
+    build: .
+    command: celery -A demo.celery worker -Q exec_tool,celery -l info --concurrency 2
+    environment: *env
+    volumes:
+      - .:/app
+      - media:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  # Жнец: без него потерянные запуски навсегда остаются в статусе «выполняется».
+  reaper:
+    build: .
+    command: sh -c "while true; do python manage.py exec_tool_reap; sleep 30; done"
+    environment: *env
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  media:

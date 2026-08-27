@@ -11,6 +11,20 @@ repos:
     hooks:
       - id: ty-check
 
+  # Прогон полный, не по изменённым файлам: инструмент запускает команды на
+  # проде, и часть проверок (остановка, таймаут, эскалация) работает с
+  # настоящими процессами — выборочный запуск их бы пропустил.
+  # Порог покрытия 100% задан в pyproject и валит прогон сам.
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest (покрытие 100%)
+        entry: uv run pytest -q
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
